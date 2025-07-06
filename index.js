@@ -78,6 +78,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
         await interaction.reply({ embeds: [metaEmbed] });
     }
 });
+console.log("✅ IMC-MetabaseBot: Script lancé, en attente de connexion...");
+
 console.log("🚀 Lancement du bot IMC-MetabaseBot...");
 console.log("✅ Token récupéré :", process.env.TOKEN ? "Oui" : "Non");
 process.on('uncaughtException', (err) => {
