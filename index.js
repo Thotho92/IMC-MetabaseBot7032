@@ -9,6 +9,7 @@ client.once(Events.ClientReady, () => {
 
 client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isChatInputCommand()) return;
+
     try {
         await interaction.deferReply();
 
@@ -93,6 +94,7 @@ client.on(Events.InteractionCreate, async interaction => {
         console.error('❌ Erreur lors du traitement de l\'interaction :', error);
     }
 });
+
 
 process.on('unhandledRejection', console.error);
 process.on('uncaughtException', console.error);
