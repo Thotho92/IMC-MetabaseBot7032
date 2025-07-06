@@ -82,17 +82,22 @@ console.log("✅ IMC-MetabaseBot: Script lancé, en attente de connexion...");
 
 console.log("🚀 Lancement du bot IMC-MetabaseBot...");
 console.log("✅ Token récupéré :", process.env.TOKEN ? "Oui" : "Non");
-process.on('uncaughtException', (err) => {
-    console.error('🚨 Uncaught Exception:', err);
+process.on("uncaughtException", (err) => {
+    console.error("🚨 Uncaught Exception:", err);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('🚨 Unhandled Rejection at:', promise, 'reason:', reason);
+process.on("unhandledRejection", (reason, promise) => {
+    console.error("🚨 Unhandled Rejection at:", promise, "reason:", reason);
 });
+
+client;
+console.log(
+    "📡 Tentative de connexion avec le token : ",
+    process.env.TOKEN ? "Présent" : "Absent",
+);
 
 client
-    console.log("📡 Tentative de connexion avec le token : ", process.env.TOKEN ? "Présent" : "Absent");
-
     .login(process.env.TOKEN)
+
     .catch((err) => console.error("❌ Erreur de connexion Discord :", err));
 process.stdin.resume(); // Empêche le process de se fermer sur Railway
