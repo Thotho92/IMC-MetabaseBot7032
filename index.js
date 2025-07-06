@@ -1,103 +1,99 @@
-const {
-    Client,
-    GatewayIntentBits,
-    Events,
-    EmbedBuilder,
-} = require("discord.js");
-require("dotenv").config();
+require('dotenv').config();
+const { Client, GatewayIntentBits, Events, EmbedBuilder } = require('discord.js');
 
-const client = new Client({
-    intents: [GatewayIntentBits.Guilds],
-});
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 client.once(Events.ClientReady, () => {
     console.log(`✅ ${client.user.tag} est en ligne et prêt.`);
 });
 
-client.on(Events.InteractionCreate, async (interaction) => {
+client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
-    if (interaction.commandName === "imc") {
-        const poids = interaction.options.getNumber("poids");
-        const taille_cm = interaction.options.getNumber("taille");
-        const taille_m = taille_cm / 100;
+    await interaction.deferReply();
 
-        const imc = poids / (taille_m * taille_m);
-        let interpretation = "";
-        if (imc < 18.5) interpretation = "🚩 Insuffisance pondérale";
-        else if (imc < 25) interpretation = "✅ Normal";
-        else if (imc < 30) interpretation = "⚠️ Surpoids";
-        else interpretation = "🚩 Obésité";
+    if (interaction.commandName === 'imc') {
+        const poids = interaction.options.getNumber('poids');
+        const taille = interaction.options.getNumber('taille') / 100;
 
-        const imcEmbed = new EmbedBuilder()
-            .setColor("#00bfa5")
-            .setTitle("📊 Résultat de ton IMC")
+        if (!poids || !taille) {
+            return await interaction.editReply('❌ Merci d\'indiquer un poids et une taille valides.');
+        }
+
+        const imc = poids / (taille * taille);
+        let interpretation = '';
+        let conseil = '';
+
+        if (imc < 18.5) {
+            interpretation = '🚩 Insuffisance pondérale';
+            conseil = '👉 Augmente tes apports caloriques avec des repas équilibrés.';
+        } else if (imc < 25) {
+            interpretation = '✅ Corpulence normale';
+            conseil = '👌 Continue ton rythme alimentaire et ton activité physique.';
+        } else if (imc < 30) {
+            interpretation = '⚠️ Surpoids';
+            conseil = '🏃‍♂️ Augmente ton activité physique et surveille ton alimentation.';
+        } else if (imc < 35) {
+            interpretation = '⚠️ Obésité modérée';
+            conseil = '🍏 Mets en place un suivi alimentaire et consulte si besoin un professionnel.';
+        } else {
+            interpretation = '🚨 Obésité sévère';
+            conseil = '💡 Consulte rapidement un professionnel de santé pour un accompagnement.';
+        }
+
+        const embed = new EmbedBuilder()
+            .setColor(0x00bfa5)
+            .setTitle('🩺 Résultat de ton IMC')
             .addFields(
-                {
-                    name: "🧮 Ton IMC",
-                    value: `${imc.toFixed(1)}`,
-                    inline: true,
-                },
-                {
-                    name: "📌 Interprétation",
-                    value: interpretation,
-                    inline: true,
-                },
-                {
-                    name: "📏 Formule utilisée",
-                    value: "Poids (kg) ÷ Taille² (m²)",
-                },
+                { name: '📊 IMC', value: imc.toFixed(1), inline: true },
+                { name: '🩻 Interprétation', value: interpretation, inline: true },
+                { name: '💡 Conseil', value: conseil },
+                { name: '📌 Formule', value: 'Poids (kg) ÷ Taille (m)²' }
             )
-            .setFooter({ text: "HealthyBot • Calcul direct dans Discord" });
+            .setFooter({ text: 'HealthyBot • Calcul direct dans Discord' });
 
-        await interaction.reply({ embeds: [imcEmbed] });
+        await interaction.editReply({ embeds: [embed] });
     }
 
-    if (interaction.commandName === "metabase") {
-        const poids = interaction.options.getNumber("poids");
-        const taille = interaction.options.getNumber("taille");
-        const age = interaction.options.getInteger("age");
-        const sexe = interaction.options.getString("sexe");
-        const activite = parseFloat(interaction.options.getString("activite"));
+    if (interaction.commandName === 'metabase') {
+        const poids = interaction.options.getNumber('poids');
+        const taille = interaction.options.getNumber('taille');
+        const age = interaction.options.getNumber('age');
+        const sexe = interaction.options.getString('sexe');
+        const activite = parseFloat(interaction.options.getString('activite'));
+
+        if (!poids || !taille || !age || !sexe || isNaN(activite)) {
+            return await interaction.editReply('❌ Merci de fournir toutes les informations demandées.');
+        }
 
         let mb;
-        if (sexe === "homme") {
+        if (sexe === 'homme') {
             mb = 10 * poids + 6.25 * taille - 5 * age + 5;
-        } else if (sexe === "femme") {
+        } else if (sexe === 'femme') {
             mb = 10 * poids + 6.25 * taille - 5 * age - 161;
         } else {
-            return await interaction.reply("❌ Erreur : sexe invalide.");
+            return await interaction.editReply('❌ Erreur : sexe invalide.');
         }
 
         const tdee = mb * activite;
 
         const metaEmbed = new EmbedBuilder()
-            .setColor("#ff6f00")
-            .setTitle("🔥 Résultat de ton Métabolisme de Base")
+            .setColor(0x00ff87)
+            .setTitle('🔥 Résultat de ton Métabolisme de Base')
             .addFields(
-                {
-                    name: "🩺 MB (au repos)",
-                    value: `${Math.round(mb)} kcal/jour`,
-                    inline: true,
-                },
-                {
-                    name: "🏃‍♂️ TDEE (activité incluse)",
-                    value: `${Math.round(tdee)} kcal/jour`,
-                    inline: true,
-                },
-                {
-                    name: "📌 Formule utilisée",
-                    value: `Mifflin-St Jeor\nHomme: (10 × poids) + (6.25 × taille) - (5 × âge) + 5\nFemme: (10 × poids) + (6.25 × taille) - (5 × âge) - 161\nMultiplié par facteur activité`,
-                },
+                { name: '📊 MB (au repos)', value: `${Math.round(mb)} kcal/jour`, inline: true },
+                { name: '🏃‍♂️ TDEE (activité incluse)', value: `${Math.round(tdee)} kcal/jour`, inline: true },
+                { name: '📌 Formule utilisée', value: 'Harris-Benedict : 10 × poids + 6.25 × taille - 5 × âge + 5 (homme) ou -161 (femme), multiplié par facteur activité' }
             )
-            .setFooter({ text: "HealthyBot • Calcul direct dans Discord" });
+            .setFooter({ text: 'HealthyBot • Calcul direct dans Discord' });
 
-        await interaction.reply({ embeds: [metaEmbed] });
+        await interaction.editReply({ embeds: [metaEmbed] });
     }
 });
 
-// Anti crash pour Railway / Replit
-process.on("unhandledRejection", console.error);
-process.on("uncaughtException", console.error);
+process.on('unhandledRejection', console.error);
+process.on('uncaughtException', console.error);
 
 client.login(process.env.TOKEN);
+
+
