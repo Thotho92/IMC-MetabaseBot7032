@@ -84,3 +84,4 @@ console.log("✅ Token récupéré :", process.env.TOKEN ? "Oui" : "Non");
 client
     .login(process.env.TOKEN)
     .catch((err) => console.error("❌ Erreur de connexion Discord :", err));
+process.stdin.resume(); // Empêche le process de se fermer sur Railway
