@@ -1,8 +1,10 @@
-// index.js refactorisé pour IMC-MetabaseBot
+// -------------------------------------------------------------
+// IMC-MetabaseBot - index.js (réponse directe)
+// -------------------------------------------------------------
 require('dotenv').config();
 const { Client, GatewayIntentBits, Events, EmbedBuilder } = require('discord.js');
 
-// Vérification du token au démarrage
+// Vérification du token
 const { TOKEN } = process.env;
 if (!TOKEN) {
   console.error('❌ Le token du bot est requis dans process.env.TOKEN');
@@ -21,20 +23,18 @@ client.on(Events.InteractionCreate, async (interaction) => {
   const { commandName } = interaction;
 
   try {
-    // Différer la réponse pour gagner du temps
-    await interaction.deferReply();
-
     // Commande /imc
     if (commandName === 'imc') {
       const poids = interaction.options.getNumber('poids');
       const tailleCm = interaction.options.getNumber('taille');
       if (!poids || !tailleCm) {
-        return interaction.editReply({ content: '❌ Merci d’indiquer un poids et une taille valides.', ephemeral: true });
+        return interaction.reply({ content: '❌ Merci d’indiquer un poids et une taille valides.', ephemeral: true });
       }
 
       const tailleM = tailleCm / 100;
       const imc = poids / (tailleM * tailleM);
-      let interpretation, conseil;
+      let interpretation;
+      let conseil;
 
       if (imc < 18.5) {
         interpretation = '📉 Insuffisance pondérale';
@@ -64,7 +64,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         )
         .setFooter({ text: 'HealthyBot • Calcul direct dans Discord' });
 
-      return interaction.editReply({ embeds: [embed] });
+      return interaction.reply({ embeds: [embed] });
     }
 
     // Commande /metabase (Métabolisme de Base)
@@ -76,7 +76,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       const activite = interaction.options.getNumber('activite');
 
       if (!poids || !taille || !age || !sexe || !activite) {
-        return interaction.editReply({ content: '❌ Merci de fournir toutes les informations demandées.', ephemeral: true });
+        return interaction.reply({ content: '❌ Merci de fournir toutes les informations demandées.', ephemeral: true });
       }
 
       // Calcul du MB selon Harris-Benedict
@@ -89,7 +89,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
           mb = 10 * poids + 6.25 * taille - 5 * age - 161;
           break;
         default:
-          return interaction.editReply({ content: '❌ Sexe invalide. (homme/femme)', ephemeral: true });
+          return interaction.reply({ content: '❌ Sexe invalide. (homme/femme)', ephemeral: true });
       }
 
       const tdee = mb * activite;
@@ -103,20 +103,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
         )
         .setFooter({ text: 'HealthyBot • Calcul direct dans Discord' });
 
-      return interaction.editReply({ embeds: [embed] });
+      return interaction.reply({ embeds: [embed] });
     }
 
     // Commande non gérée
-    return interaction.editReply({ content: `❌ Commande inconnue : ${commandName}`, ephemeral: true });
-
+    return interaction.reply({ content: `❌ Commande inconnue : ${commandName}`, ephemeral: true });
   } catch (err) {
     console.error('❌ Erreur interactionCreate :', err);
-    const replyContent = '❌ Une erreur interne est survenue.';
-    if (interaction.deferred || interaction.replied) {
-      await interaction.editReply({ content: replyContent, ephemeral: true });
-    } else {
-      await interaction.reply({ content: replyContent, ephemeral: true });
-    }
+    return interaction.reply({ content: '❌ Une erreur interne est survenue.', ephemeral: true });
   }
 });
 
