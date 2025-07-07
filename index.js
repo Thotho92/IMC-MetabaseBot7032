@@ -151,6 +151,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
   }
 });
+const express = require('express');
+const app = express();
+
+// Endpoint pour vérifier que le bot est en ligne
+app.get('/', (req, res) => res.send('IMC-MetabaseBot#7032 en ligne ✅'));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🌐 Keep-alive actif sur le port ${PORT}`));
 
 client.login(TOKEN);
 setInterval(() => {}, 1 << 30);
