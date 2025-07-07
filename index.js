@@ -1,6 +1,8 @@
 // ------------------------------------------------------------
 // IMC-MetabaseBot - index.js (stabilisation Railway 24/7)
 // ------------------------------------------------------------
+const express = require("express");
+const app = express();
 
 require("dotenv").config();
 const {
@@ -151,11 +153,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
   }
 });
-const express = require('express');
-const app = express();
 
 // Endpoint pour vérifier que le bot est en ligne
-app.get('/', (req, res) => res.send('IMC-MetabaseBot#7032 en ligne ✅'));
+app.get("/", (req, res) => res.send("IMC-MetabaseBot#7032 en ligne ✅"));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🌐 Keep-alive actif sur le port ${PORT}`));
