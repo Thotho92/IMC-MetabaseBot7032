@@ -151,6 +151,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
   }
 });
-setInterval(() => {}, 1000 * 60 * 60);
 
 client.login(TOKEN);
+setInterval(() => {}, 1 << 30);
