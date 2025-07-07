@@ -77,39 +77,49 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply({ embeds: [embed] });
     }
 
-    if (commandName === 'objectif') {
-        const objectif = options.getString('objectif');
-        let titre = "";
-        let conseil = "";
-        let couleur = 0x00ff00;
+   if (commandName === 'objectif') {
+    const objectif = options.getString('objectif');
+    let titre = "";
+    let conseil = "";
+    let macros = "";
+    let couleur = 0x00ff00;
 
-        if (objectif === 'perte') {
-            titre = "🔻 Objectif : Perte de poids";
-            conseil = "📉 Vise un déficit de ~300 kcal/jour, consomme 1,6–2 g de protéines/kg de poids de corps, augmente ton activité physique (marche, muscu, HIIT) pour préserver la masse musculaire.";
-            couleur = 0xff4d4d;
-        } else if (objectif === 'prise') {
-            titre = "💪 Objectif : Prise de muscle";
-            conseil = "🍽️ Vise un surplus de 200–300 kcal/jour, consomme 1,6–2 g de protéines/kg de poids de corps, priorise l'entraînement de force 3-4x/semaine, privilégie les glucides complexes et le repos.";
-            couleur = 0x4caf50;
-        } else if (objectif === 'maintien') {
-            titre = "⚖️ Objectif : Maintien";
-            conseil = "⚖️ Maintiens ton apport calorique à ton TDEE, reste actif quotidiennement, assure un apport suffisant en protéines (~1,2–1,6 g/kg), en fruits/légumes, et surveille ton poids chaque semaine pour ajuster si besoin.";
-            couleur = 0x00bfff;
-        } else {
-            titre = "❓ Objectif non reconnu";
-            conseil = "Merci de spécifier un objectif valide : perte, prise ou maintien.";
-            couleur = 0xffff00;
-        }
-
-        const embed = new EmbedBuilder()
-            .setColor(couleur)
-            .setTitle(titre)
-            .setDescription(conseil)
-            .setFooter({ text: 'HealthyBot • Calcul direct dans Discord' })
-            .setTimestamp();
-
-        await interaction.reply({ embeds: [embed] });
+    if (objectif === 'perte') {
+        titre = "🔻 Objectif : Perte de poids";
+        conseil = "Vise un déficit modéré (~300 kcal/jour) sans te priver brutalement. Reste actif, marche davantage, conserve tes séances de muscu pour préserver la masse musculaire.";
+        macros = "1,6–2 g de protéines/kg de poids, glucides complexes, légumes en quantité, graisses saines modérées.";
+        couleur = 0xff4d4d;
+    } else if (objectif === 'prise') {
+        titre = "💪 Objectif : Prise de muscle";
+        conseil = "Vise un léger surplus calorique (~200–300 kcal/jour). Priorise l'entraînement de force 3-4x/semaine et assure un bon sommeil pour maximiser ta récupération.";
+        macros = "1,6–2 g de protéines/kg, glucides complexes en quantité, graisses saines.";
+        couleur = 0x4caf50;
+    } else if (objectif === 'maintien') {
+        titre = "⚖️ Objectif : Maintien";
+        conseil = "Stabilise ton poids en maintenant ton TDEE, reste actif quotidiennement et surveille ton poids chaque semaine pour ajuster au besoin.";
+        macros = "~1,2–1,6 g de protéines/kg, apport équilibré en glucides et graisses saines.";
+        couleur = 0x00bfff;
+    } else {
+        titre = "❓ Objectif non reconnu";
+        conseil = "Merci de spécifier un objectif valide : perte, prise ou maintien.";
+        macros = "-";
+        couleur = 0xffff00;
     }
+
+    const embed = new EmbedBuilder()
+        .setColor(couleur)
+        .setTitle(titre)
+        .addFields(
+            { name: '💡 Conseil', value: conseil },
+            { name: '🍽️ Recommandations nutritionnelles', value: macros },
+            { name: '📌 Rappel', value: 'La constance est la clé : surveille ton poids chaque semaine et ajuste si besoin.' }
+        )
+        .setFooter({ text: 'HealthyBot • Calcul direct dans Discord' })
+        .setTimestamp();
+
+    await interaction.reply({ embeds: [embed] });
+}
+
 });
 
 client.login(process.env.TOKEN);
