@@ -1,164 +1,115 @@
-// ------------------------------------------------------------
-// IMC-MetabaseBot - index.js (stabilisation Railway 24/7)
-// ------------------------------------------------------------
-const express = require("express");
-const app = express();
+require('dotenv').config();
+const { Client, GatewayIntentBits, SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
-require("dotenv").config();
-const {
-  Client,
-  GatewayIntentBits,
-  Events,
-  EmbedBuilder,
-} = require("discord.js");
-
-// ✅ Gestion des erreurs silencieuses
-process.on("uncaughtException", console.error);
-process.on("unhandledRejection", console.error);
-
-// ✅ Vérification du token
-const TOKEN = process.env.TOKEN;
-if (!TOKEN) {
-  console.error("❌ Le token du bot est requis dans process.env.TOKEN");
-  process.exit(1);
-}
-
-// ✅ Initialisation du client Discord
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-client.once(Events.ClientReady, () => {
-  console.log(`✅ ${client.user.tag} est en ligne et prêt.`);
+client.once('ready', () => {
+    console.log(`✅ Connecté en tant que ${client.user.tag}`);
 });
 
-client.on(Events.InteractionCreate, async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
-  const commandName = interaction.commandName;
+client.on('interactionCreate', async interaction => {
+    if (!interaction.isChatInputCommand()) return;
 
-  try {
-    // -------------------------
-    // Commande /imc
-    // -------------------------
-    if (commandName === "imc") {
-      const poids = interaction.options.getNumber("poids");
-      const tailleCm = interaction.options.getNumber("taille");
-      if (!poids || !tailleCm) {
-        return interaction.reply({
-          content: "❌ Merci d’indiquer un poids et une taille valides.",
-          ephemeral: true,
-        });
-      }
+    const { commandName, options } = interaction;
 
-      const tailleM = tailleCm / 100;
-      const imc = poids / (tailleM * tailleM);
-      let interpretation = "";
-      let conseil = "";
+    if (commandName === 'imc') {
+        const poids = options.getNumber('poids');
+        const taille = options.getNumber('taille') / 100;
+        const imc = poids / (taille * taille);
 
-      if (imc < 18.5) {
-        interpretation = "📉 Insuffisance pondérale";
-        conseil =
-          "🍽️ Augmente tes apports caloriques avec des repas équilibrés.";
-      } else if (imc < 25) {
-        interpretation = "✅ Corpulence normale";
-        conseil =
-          "💪 Continue ton rythme alimentaire et ton activité physique.";
-      } else if (imc < 30) {
-        interpretation = "⚠️ Surpoids";
-        conseil =
-          "🏃‍♂️ Augmente ton activité physique et surveille ton alimentation.";
-      } else if (imc < 35) {
-        interpretation = "⚠️ Obésité modérée";
-        conseil =
-          "🩺 Mets en place un suivi alimentaire et consulte si besoin.";
-      } else {
-        interpretation = "🛑 Obésité sévère";
-        conseil = "⚠️ Consulte rapidement un professionnel de santé.";
-      }
+        let interpretation = '';
+        if (imc < 18.5) {
+            interpretation = "Insuffisance pondérale";
+        } else if (imc < 25) {
+            interpretation = "Corpulence normale";
+        } else if (imc < 30) {
+            interpretation = "Surpoids";
+        } else {
+            interpretation = "Obésité";
+        }
 
-      const embed = new EmbedBuilder()
-        .setColor(0x00bfa5)
-        .setTitle("🩺 Résultat de ton IMC")
-        .addFields(
-          { name: "🩻 IMC", value: imc.toFixed(1), inline: true },
-          { name: "🗂️ Interprétation", value: interpretation, inline: true },
-          { name: "💡 Conseil", value: conseil },
-          { name: "📌 Formule", value: "Poids (kg) ÷ Taille² (m²)" },
-        )
-        .setFooter({ text: "HealthyBot • Calcul direct dans Discord" });
+        const embed = new EmbedBuilder()
+            .setColor(0x00bfff)
+            .setTitle('𓂀 Résultat de ton IMC')
+            .addFields(
+                { name: '📊 IMC', value: `${imc.toFixed(1)}`, inline: true },
+                { name: '📋 Interprétation', value: interpretation, inline: true },
+                { name: '💡 Conseil', value: "Continue ton rythme alimentaire et ton activité physique si ton IMC est normal, sinon ajuste en conséquence." },
+                { name: '📌 Formule', value: 'Poids (kg) ÷ Taille² (m²)\nHealthyBot • Calcul direct dans Discord' },
+            )
+            .setTimestamp();
 
-      await interaction.reply({ embeds: [embed] });
+        await interaction.reply({ embeds: [embed] });
     }
 
-    // -------------------------
-    // Commande /metabase
-    // -------------------------
-    if (commandName === "metabase") {
-      const poids = interaction.options.getNumber("poids");
-      const taille = interaction.options.getNumber("taille");
-      const age = interaction.options.getNumber("age");
-      const sexe = interaction.options.getString("sexe");
-      const activite = parseFloat(interaction.options.getString("activite"));
+    if (commandName === 'metabase') {
+        const poids = options.getNumber('poids');
+        const taille = options.getNumber('taille');
+        const age = options.getNumber('age');
+        const sexe = options.getString('sexe');
+        const activite = options.getString('activite');
 
-      if (!poids || !taille || !age || !sexe || isNaN(activite)) {
-        return interaction.reply({
-          content: "❌ Merci de fournir toutes les informations demandées.",
-          ephemeral: true,
-        });
-      }
+        let mb = 0;
+        if (sexe === 'homme') {
+            mb = 10 * poids + 6.25 * taille - 5 * age + 5;
+        } else {
+            mb = 10 * poids + 6.25 * taille - 5 * age - 161;
+        }
 
-      let mb;
-      if (sexe === "homme") {
-        mb = 10 * poids + 6.25 * taille - 5 * age + 5;
-      } else if (sexe === "femme") {
-        mb = 10 * poids + 6.25 * taille - 5 * age - 161;
-      } else {
-        return interaction.reply({
-          content: "❌ Sexe invalide.",
-          ephemeral: true,
-        });
-      }
+        let facteurActivite = 1.2;
+        if (activite === 'leger') facteurActivite = 1.375;
+        else if (activite === 'modere') facteurActivite = 1.55;
+        else if (activite === 'eleve') facteurActivite = 1.725;
+        else if (activite === 'tres_eleve') facteurActivite = 1.9;
 
-      const tdee = mb * activite;
+        const tdee = mb * facteurActivite;
 
-      const embed = new EmbedBuilder()
-        .setColor(0x00bfa5)
-        .setTitle("🔥 Résultat de ton Métabolisme de Base")
-        .addFields(
-          {
-            name: "🩻 MB (au repos)",
-            value: `${Math.round(mb)} kcal/jour`,
-            inline: true,
-          },
-          {
-            name: "🔥 TDEE (activité incluse)",
-            value: `${Math.round(tdee)} kcal/jour`,
-            inline: true,
-          },
-          {
-            name: "📌 Formule utilisée",
-            value:
-              "Harris-Benedict : 10 x poids + 6.25 x taille - 5 x âge + 5 (homme) ou -161 (femme), multiplié par le facteur d'activité",
-          },
-        )
-        .setFooter({ text: "HealthyBot • Calcul direct dans Discord" });
+        const embed = new EmbedBuilder()
+            .setColor(0xff8c00)
+            .setTitle('🔥 Résultat de ton Métabolisme de Base')
+            .addFields(
+                { name: '🩺 MB (au repos)', value: `${Math.round(mb)} kcal/jour`, inline: true },
+                { name: '🏃‍♂️ TDEE (activité incluse)', value: `${Math.round(tdee)} kcal/jour`, inline: true },
+                { name: '📌 Formule utilisée', value: `Mifflin-St Jeor\nHomme : (10 × poids) + (6.25 × taille) – (5 × âge) + 5\nFemme : (10 × poids) + (6.25 × taille) – (5 × âge) – 161\nMultiplié par le facteur d'activité` },
+            )
+            .setTimestamp();
 
-      await interaction.reply({ embeds: [embed] });
+        await interaction.reply({ embeds: [embed] });
     }
-  } catch (error) {
-    console.error("❌ Erreur dans interactionCreate :", error);
-    if (!interaction.replied) {
-      await interaction.reply({
-        content: "❌ Une erreur est survenue.",
-        ephemeral: true,
-      });
+
+    if (commandName === 'objectif') {
+        const objectif = options.getString('objectif');
+        let titre = "";
+        let conseil = "";
+        let couleur = 0x00ff00;
+
+        if (objectif === 'perte') {
+            titre = "🔻 Objectif : Perte de poids";
+            conseil = "📉 Vise un déficit de ~300 kcal/jour, consomme 1,6–2 g de protéines/kg de poids de corps, augmente ton activité physique (marche, muscu, HIIT) pour préserver la masse musculaire.";
+            couleur = 0xff4d4d;
+        } else if (objectif === 'prise') {
+            titre = "💪 Objectif : Prise de muscle";
+            conseil = "🍽️ Vise un surplus de 200–300 kcal/jour, consomme 1,6–2 g de protéines/kg de poids de corps, priorise l'entraînement de force 3-4x/semaine, privilégie les glucides complexes et le repos.";
+            couleur = 0x4caf50;
+        } else if (objectif === 'maintien') {
+            titre = "⚖️ Objectif : Maintien";
+            conseil = "⚖️ Maintiens ton apport calorique à ton TDEE, reste actif quotidiennement, assure un apport suffisant en protéines (~1,2–1,6 g/kg), en fruits/légumes, et surveille ton poids chaque semaine pour ajuster si besoin.";
+            couleur = 0x00bfff;
+        } else {
+            titre = "❓ Objectif non reconnu";
+            conseil = "Merci de spécifier un objectif valide : perte, prise ou maintien.";
+            couleur = 0xffff00;
+        }
+
+        const embed = new EmbedBuilder()
+            .setColor(couleur)
+            .setTitle(titre)
+            .setDescription(conseil)
+            .setFooter({ text: 'HealthyBot • Calcul direct dans Discord' })
+            .setTimestamp();
+
+        await interaction.reply({ embeds: [embed] });
     }
-  }
 });
 
-// Endpoint pour vérifier que le bot est en ligne
-app.get("/", (req, res) => res.send("IMC-MetabaseBot#7032 en ligne ✅"));
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🌐 Keep-alive actif sur le port ${PORT}`));
-
-client.login(TOKEN);
-setInterval(() => {}, 1 << 30);
+client.login(process.env.TOKEN);
