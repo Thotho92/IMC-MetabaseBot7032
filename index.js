@@ -1,9 +1,8 @@
+// index.js clean et stable pour IMC-MetabaseBot
 require('dotenv').config();
 const { Client, GatewayIntentBits, Events, EmbedBuilder } = require('discord.js');
 
-const client = new Client({
-    intents: [GatewayIntentBits.Guilds],
-});
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 client.once(Events.ClientReady, () => {
     console.log(`✅ ${client.user.tag} est en ligne et prêt.`);
@@ -20,35 +19,40 @@ client.on(Events.InteractionCreate, async interaction => {
         if (interaction.commandName === 'imc') {
             const poids = interaction.options.getNumber('poids');
             const taille = interaction.options.getNumber('taille') / 100;
+
             if (!poids || !taille) {
                 return await interaction.editReply('❌ Merci d\'indiquer un poids et une taille valides.');
             }
+
             const imc = poids / (taille * taille);
             let interpretation = '';
             let conseil = '';
 
             if (imc < 18.5) {
-                interpretation = '📌 Insuffisance pondérale';
-                conseil = '🍽️ Augmente ton apport calorique.';
+                interpretation = '📉 Insuffisance pondérale';
+                conseil = '🍽️ Augmente tes apports caloriques avec des repas équilibrés.';
             } else if (imc < 25) {
                 interpretation = '✅ Corpulence normale';
-                conseil = '💪 Continue ton rythme alimentaire et ton activité.';
+                conseil = '💪 Continue ton rythme alimentaire et ton activité physique.';
             } else if (imc < 30) {
                 interpretation = '⚠️ Surpoids';
-                conseil = '🏃 Augmente ton activité et surveille ton alimentation.';
+                conseil = '🏃‍♂️ Augmente ton activité physique et surveille ton alimentation.';
+            } else if (imc < 35) {
+                interpretation = '⚠️ Obésité modérée';
+                conseil = '🩺 Mets en place un suivi alimentaire et consulte si besoin.';
             } else {
-                interpretation = '❌ Obésité';
-                conseil = '📞 Consulte un professionnel de santé.';
+                interpretation = '🛑 Obésité sévère';
+                conseil = '⚠️ Consulte rapidement un professionnel de santé.';
             }
 
             const embed = new EmbedBuilder()
                 .setColor(0x00bfa5)
                 .setTitle('🩺 Résultat de ton IMC')
                 .addFields(
-                    { name: '📊 IMC', value: imc.toFixed(1), inline: true },
-                    { name: '📌 Interprétation', value: interpretation, inline: true },
+                    { name: '🩻 IMC', value: imc.toFixed(1), inline: true },
+                    { name: '🗂️ Interprétation', value: interpretation, inline: true },
                     { name: '💡 Conseil', value: conseil },
-                    { name: '📏 Formule', value: 'Poids (kg) ÷ Taille² (m²)' }
+                    { name: '📌 Formule', value: 'Poids (kg) ÷ Taille² (m²)' }
                 )
                 .setFooter({ text: 'HealthyBot • Calcul direct dans Discord' });
 
@@ -81,9 +85,9 @@ client.on(Events.InteractionCreate, async interaction => {
                 .setColor(0x00bfa5)
                 .setTitle('🔥 Résultat de ton Métabolisme de Base')
                 .addFields(
-                    { name: '🛌 MB (au repos)', value: `${Math.round(mb)} kcal/jour`, inline: true },
-                    { name: '🏃 TDEE (activité incluse)', value: `${Math.round(tdee)} kcal/jour`, inline: true },
-                    { name: '📏 Formule utilisée', value: 'Mifflin-St Jeor: 10×poids + 6.25×taille - 5×âge + 5 (H) / -161 (F), multiplié par facteur activité' }
+                    { name: '🩻 MB (au repos)', value: `${Math.round(mb)} kcal/jour`, inline: true },
+                    { name: '🔥 TDEE (activité incluse)', value: `${Math.round(tdee)} kcal/jour`, inline: true },
+                    { name: '📌 Formule utilisée', value: 'Harris-Benedict : 10 x poids + 6.25 x taille - 5 x âge + 5 (homme) ou -161 (femme), multiplié par le facteur d\'activité' }
                 )
                 .setFooter({ text: 'HealthyBot • Calcul direct dans Discord' });
 
@@ -91,7 +95,10 @@ client.on(Events.InteractionCreate, async interaction => {
         }
 
     } catch (error) {
-        console.error('❌ Erreur de traitement:', error);
+        console.error('❌ Erreur dans interactionCreate :', error);
+        if (!interaction.replied) {
+            await interaction.editReply('❌ Une erreur est survenue.');
+        }
     }
 });
 
