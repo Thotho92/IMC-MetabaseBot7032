@@ -1,77 +1,25 @@
-const { REST, Routes, SlashCommandBuilder } = require("discord.js");
-require("dotenv").config();
+const { REST, Routes } = require('discord.js');
+const fs = require('node:fs');
+require('dotenv').config();
 
-const commands = [
-    new SlashCommandBuilder()
-        .setName("imc")
-        .setDescription("Calcule ton Indice de Masse Corporelle (IMC)")
-        .addNumberOption(option =>
-            option.setName("poids")
-                .setDescription("Ton poids en kg")
-                .setRequired(true)
-        )
-        .addNumberOption(option =>
-            option.setName("taille")
-                .setDescription("Ta taille en cm")
-                .setRequired(true)
-        ),
+// Créer un tableau vide pour stocker les commandes
+const commands = [];
 
-    new SlashCommandBuilder()
-        .setName("metabase")
-        .setDescription("Calcule ton Métabolisme de Base (MB) et ton TDEE")
-        .addNumberOption(option =>
-            option.setName("poids")
-                .setDescription("Ton poids en kg")
-                .setRequired(true)
-        )
-        .addNumberOption(option =>
-            option.setName("taille")
-                .setDescription("Ta taille en cm")
-                .setRequired(true)
-        )
-        .addNumberOption(option =>
-            option.setName("age")
-                .setDescription("Ton âge en années")
-                .setRequired(true)
-        )
-        .addStringOption(option =>
-            option.setName("sexe")
-                .setDescription("Ton sexe")
-                .setRequired(true)
-                .addChoices(
-                    { name: "Homme", value: "homme" },
-                    { name: "Femme", value: "femme" },
-                )
-        )
-        .addStringOption(option =>
-            option.setName("activite")
-                .setDescription("Ton niveau d'activité")
-                .setRequired(true)
-                .addChoices(
-                    { name: "Sédentaire", value: "sedentaire" },
-                    { name: "Peu actif", value: "peu_actif" },
-                    { name: "Actif", value: "actif" },
-                    { name: "Très actif", value: "tres_actif" },
-                )
-        ),
+// Lire tous les fichiers .js dans le dossier /commands
+const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 
-    new SlashCommandBuilder()
-        .setName("objectif")
-        .setDescription("Définis ton objectif (perte de poids, prise de muscle, maintien) et reçois tes kcal et macros")
-        .addStringOption(option =>
-            option.setName("objectif")
-                .setDescription("Choisis ton objectif")
-                .setRequired(true)
-                .addChoices(
-                    { name: "Perte de poids", value: "perte" },
-                    { name: "Prise de muscle", value: "prise" },
-                    { name: "Maintien", value: "maintien" },
-                )
-        ),
-]
-    .map(command => command.toJSON());
+// Charger chaque commande et push son .data en JSON
+for (const file of commandFiles) {
+    const command = require(`../commands/${file}`);
+    if ('data' in command && 'execute' in command) {
+        commands.push(command.data.toJSON());
+        console.log(`✅ Commande prête pour déploiement : ${command.data.name}`);
+    } else {
+        console.warn(`⚠️ La commande ${file} est invalide (manque 'data' ou 'execute').`);
+    }
+}
 
-const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
+const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
 (async () => {
     try {
@@ -79,11 +27,11 @@ const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 
         await rest.put(
             Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
-            { body: commands }
+            { body: commands },
         );
 
         console.log("✅ Commandes slash déployées sur la guilde avec succès.");
     } catch (error) {
-        console.error(error);
+        console.error("❌ Erreur lors du déploiement :", error);
     }
 })();
