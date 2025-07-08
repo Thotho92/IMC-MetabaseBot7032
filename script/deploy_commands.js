@@ -44,7 +44,7 @@ const commands = [
                 )
         )
         .addStringOption(option =>
-            option.setName("activité")
+            option.setName("activite")
                 .setDescription("Ton niveau d'activité")
                 .setRequired(true)
                 .addChoices(
