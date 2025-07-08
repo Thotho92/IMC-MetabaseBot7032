@@ -183,32 +183,39 @@ client.on('interactionCreate', async interaction => {
     }
 
     if (commandName === 'objectif') {
-      const obj = options.getString('objectif');
+    const obj = options.getString('objectif');
+    console.log('✅ Commande /objectif reçue avec obj =', obj); // Debug live
 
-      let titre, conseil;
-      switch (obj) {
+    let titre, conseil;
+    switch (obj) {
         case 'perte':
-          titre   = '🔻 Objectif : Perte de poids';
-          conseil = 'Déficit modéré (~300 kcal/j), reste actif et préserve ta masse musculaire.';
-          break;
+            titre   = '🔻 Objectif : Perte de poids';
+            conseil = 'Déficit modéré (~300 kcal/j), reste actif et préserve ta masse musculaire.';
+            break;
         case 'prise':
-          titre   = '💪 Objectif : Prise de muscle';
-          conseil = 'Surplus léger (~200–300 kcal/j), force 3–4×/sem et bonne récupération.';
-          break;
+            titre   = '💪 Objectif : Prise de muscle';
+            conseil = 'Surplus léger (~200–300 kcal/j), force 3–4×/sem et bonne récupération.';
+            break;
+        case 'maintien':
+            titre   = '⚖️ Objectif : Maintien';
+            conseil = 'Maintiens ton TDEE, bouge chaque jour et ajuste selon ta balance.';
+            break;
         default:
-          titre   = '⚖️ Objectif : Maintien';
-          conseil = 'Maintiens ton TDEE, bouge chaque jour et ajuste selon ta balance.';
-      }
+            titre   = '❌ Erreur : Objectif invalide';
+            conseil = "L'objectif fourni est invalide. Merci de réessayer avec 'perte', 'prise' ou 'maintien'.";
+            console.warn('⚠️ Valeur obj inattendue dans /objectif :', obj);
+    }
 
-      const embed = new EmbedBuilder()
+    const embed = new EmbedBuilder()
         .setColor(0x00bfff)
         .setTitle(titre)
         .setDescription(conseil)
         .setTimestamp();
 
-      await interaction.editReply({ embeds: [embed] });
-      return;
-    }
+    await interaction.editReply({ embeds: [embed] });
+    return;
+}
+
 
     // Au cas où un autre commandName passe ici
     await interaction.editReply('⚠️ Commande inconnue');
