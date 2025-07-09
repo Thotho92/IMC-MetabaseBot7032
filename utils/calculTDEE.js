@@ -8,43 +8,34 @@ function calculerTDEE(interaction) {
     const activite = interaction.options.getString('activite');
 
     if (!poids || !taille || !age || !sexe || !activite) {
-        throw new Error('Informations manquantes pour le calcul du TDEE.');
+        throw new Error('Données manquantes pour le calcul TDEE');
     }
 
-    let mb;
-    if (sexe === 'homme') {
-        mb = 10 * poids + 6.25 * taille - 5 * age + 5;
-    } else if (sexe === 'femme') {
-        mb = 10 * poids + 6.25 * taille - 5 * age - 161;
-    } else {
-        throw new Error('Sexe invalide.');
-    }
+    let mb = sexe === 'homme'
+        ? 10 * poids + 6.25 * taille - 5 * age + 5
+        : 10 * poids + 6.25 * taille - 5 * age - 161;
 
-    const facteursActivite = {
+    const facteurs = {
         faible: 1.2,
         moderee: 1.375,
         elevee: 1.55,
-        tres_elevee: 1.725
+        tres_elevee: 1.725,
     };
 
-    const facteur = facteursActivite[activite];
-    if (!facteur) {
-        throw new Error('Niveau d\'activité invalide.');
-    }
-
+    const facteur = facteurs[activite];
     const tdee = Math.round(mb * facteur);
 
-    const tdeeEmbed = new EmbedBuilder()
+    const embed = new EmbedBuilder()
         .setColor('#00FF99')
-        .setTitle('🔥 Résultat de ton TDEE')
+        .setTitle('🔥 Résultat TDEE')
         .addFields(
-            { name: '⚡ Métabolisme de Base (MB)', value: `${Math.round(mb)} kcal/jour`, inline: true },
-            { name: '🏃‍♂️ Activité', value: `${activite}`, inline: true },
-            { name: '🍽️ Besoins caloriques (TDEE)', value: `${tdee} kcal/jour` }
+            { name: '⚡ MB', value: `${Math.round(mb)} kcal`, inline: true },
+            { name: '🏃 Activité', value: activite, inline: true },
+            { name: '🍽️ TDEE', value: `${tdee} kcal/jour`, inline: false }
         )
         .setFooter({ text: 'HealthyBot • Calcul direct dans Discord' });
 
-    return { embed: tdeeEmbed };
+    return { embed };
 }
 
 module.exports = { calculerTDEE };
