@@ -1,5 +1,3 @@
-// 📂 utils/calculTDEE.js
-
 const { EmbedBuilder } = require('discord.js');
 
 function calculerTDEE(interaction) {
@@ -9,10 +7,8 @@ function calculerTDEE(interaction) {
     const sexe = interaction.options.getString('sexe');
     const activite = interaction.options.getString('activite');
 
-   if (poids == null || taille == null || age == null || sexe == null || activite == null) {
-    throw new Error('Informations manquantes pour le calcul du TDEE.');
-}
-;
+    if (!poids || !taille || !age || !sexe || !activite) {
+        throw new Error('Informations manquantes pour le calcul du TDEE.');
     }
 
     let mb;
@@ -21,7 +17,7 @@ function calculerTDEE(interaction) {
     } else if (sexe === 'femme') {
         mb = 10 * poids + 6.25 * taille - 5 * age - 161;
     } else {
-        throw new Error('❌ Sexe invalide.');
+        throw new Error('Sexe invalide.');
     }
 
     const facteursActivite = {
@@ -33,7 +29,7 @@ function calculerTDEE(interaction) {
 
     const facteur = facteursActivite[activite];
     if (!facteur) {
-        throw new Error('❌ Niveau d\'activité invalide.');
+        throw new Error('Niveau d\'activité invalide.');
     }
 
     const tdee = Math.round(mb * facteur);
@@ -46,10 +42,9 @@ function calculerTDEE(interaction) {
             { name: '🏃‍♂️ Activité', value: `${activite}`, inline: true },
             { name: '🍽️ Besoins caloriques (TDEE)', value: `${tdee} kcal/jour` }
         )
-        .setFooter({ text: 'Healthy&Co • Calcul direct dans Discord' });
+        .setFooter({ text: 'HealthyBot • Calcul direct dans Discord' });
 
     return { embed: tdeeEmbed };
 }
 
 module.exports = { calculerTDEE };
-
