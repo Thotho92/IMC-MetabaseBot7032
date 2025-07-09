@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -6,34 +6,34 @@ module.exports = {
         .setDescription('Définis ton objectif (perte de poids, prise de masse, maintien).')
         .addStringOption(option =>
             option.setName('objectif')
-                .setDescription('Choisis ton objectif')
+                .setDescription('Ton objectif actuel.')
                 .setRequired(true)
-                .addChoices(
-                    { name: 'Perte de poids', value: 'perte' },
-                    { name: 'Prise de masse', value: 'prise' },
-                    { name: 'Maintien', value: 'maintien' }
-                )
         ),
 
     async execute(interaction) {
-        console.log('✅ Commande /objectif reçue');
-
         try {
+            console.log('✅ Commande /objectif reçue');
+
+            await interaction.deferReply({ ephemeral: false });
+
             const obj = interaction.options.getString('objectif');
-            console.log('✅ Option objectif récupérée :', obj);
 
-            await interaction.reply({ content: `🎯 Ton objectif **${obj}** a bien été enregistré.`, ephemeral: false });
+            const objectifEmbed = new EmbedBuilder()
+                .setColor('#00FF99')
+                .setTitle('🎯 Objectif enregistré')
+                .setDescription(`Ton objectif **${obj}** a été enregistré avec succès.`)
+                .setFooter({ text: 'Healthy&Co - Suivi personnalisé' });
 
+            await interaction.editReply({ embeds: [objectifEmbed] });
+
+            console.log(`✅ Objectif enregistré : ${obj}`);
         } catch (error) {
             console.error('❌ Erreur dans la commande /objectif :', error);
             if (interaction.deferred || interaction.replied) {
-                await interaction.followUp({ content: `❌ Une erreur est survenue lors de l'enregistrement de ton objectif.`, ephemeral: true });
-
+                await interaction.followUp({ content: '❌ Une erreur est survenue lors de l\'enregistrement de ton objectif.', ephemeral: true });
             } else {
-                await interaction.reply({ content: `❌ Une erreur est survenue lors de l'enregistrement de ton objectif.`, ephemeral: true });
-
+                await interaction.reply({ content: '❌ Une erreur est survenue lors de l\'enregistrement de ton objectif.', ephemeral: true });
             }
         }
-    }
+    },
 };
-
