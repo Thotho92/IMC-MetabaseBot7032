@@ -1,4 +1,3 @@
-// 📂 commands/quizz.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const questions = require('../questions/questions');
 
@@ -8,12 +7,11 @@ module.exports = {
         .setDescription('Lance un quiz nutrition sur Healthy&Co.'),
 
     async execute(interaction) {
-        try {
-            console.log("✅ Commande /quizz reçue, préparation de l'embed.");
+        console.log('✅ Commande /quizz reçue');
 
+        try {
             await interaction.deferReply();
 
-            // Sélection aléatoire d'une question
             const question = questions[Math.floor(Math.random() * questions.length)];
 
             const quizEmbed = new EmbedBuilder()
@@ -21,14 +19,16 @@ module.exports = {
                 .setTitle('🥑 Quiz Nutrition Healthy&Co')
                 .setDescription(`**${question.question}**`)
                 .addFields(
-                    { name: '🇦', value: question.options[0], inline: true },
-                    { name: '🇧', value: question.options[1], inline: true },
-                    { name: '🇨', value: question.options[2], inline: true },
-                    { name: '🇩', value: question.options[3], inline: true }
+                    { name: 'A️⃣', value: question.options[0], inline: true },
+                    { name: 'B️⃣', value: question.options[1], inline: true },
+                    { name: 'C️⃣', value: question.options[2], inline: true },
+                    { name: 'D️⃣', value: question.options[3], inline: true }
                 )
                 .setFooter({ text: 'Réponds en envoyant A, B, C ou D dans les 30 secondes.' });
 
             await interaction.editReply({ embeds: [quizEmbed] });
+
+            console.log('✅ Embed du quiz envoyé');
 
             const filter = m => m.author.id === interaction.user.id && ['A', 'B', 'C', 'D'].includes(m.content.toUpperCase());
             const collector = interaction.channel.createMessageCollector({ filter, time: 30000, max: 1 });
