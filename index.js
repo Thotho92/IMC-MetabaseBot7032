@@ -12,9 +12,19 @@ client.on('interactionCreate', async interaction => {
 
     // ===================== 📊 /imc =====================
     if (interaction.commandName === 'imc') {
-        await interaction.deferReply();
         const poids = interaction.options.getNumber('poids');
         const taille = interaction.options.getNumber('taille');
+
+        if (!poids || !taille) {
+            await interaction.reply({
+                content: '❌ Merci de fournir le **poids** et la **taille** pour calculer ton IMC.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        await interaction.deferReply();
+
         const tailleEnMetres = taille / 100;
         const imc = poids / (tailleEnMetres * tailleEnMetres);
         let interpretation =
@@ -37,7 +47,7 @@ client.on('interactionCreate', async interaction => {
                 { name: '💡 Conseil', value: conseil, inline: false },
                 { name: '📌 Formule', value: 'Poids (kg) ÷ Taille² (m²)', inline: false }
             )
-            .setThumbnail('https://cdn.discordapp.com/attachments/1388604881262350507/1392853458960388176/ChatGPT_Image_29_mai_2025_20_35_30.png')
+            .setThumbnail('https://cdn.discordapp.com/attachments/1388604881262350507/1392850813239562300/ChatGPT_Image_6_juil._2025_07_29_39.png')
             .setImage('https://cdn.discordapp.com/attachments/1388604881262350507/1392853458960388176/ChatGPT_Image_29_mai_2025_20_35_30.png')
             .setFooter({ text: 'HealthyBot • Calcul IMC' })
             .setTimestamp();
@@ -47,12 +57,21 @@ client.on('interactionCreate', async interaction => {
 
     // ===================== 🔥 /metabase =====================
     if (interaction.commandName === 'metabase') {
-        await interaction.deferReply();
         const poids = interaction.options.getNumber('poids');
         const taille = interaction.options.getNumber('taille');
         const age = interaction.options.getInteger('age');
         const sexe = interaction.options.getString('sexe');
         const activite = interaction.options.getString('activite');
+
+        if (!poids || !taille || !age || !sexe || !activite) {
+            await interaction.reply({
+                content: '❌ Merci de fournir **poids, taille, âge, sexe et niveau d\'activité** pour calculer ton TDEE.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        await interaction.deferReply();
 
         const mb = sexe === 'homme'
             ? 10 * poids + 6.25 * taille - 5 * age + 5
@@ -68,8 +87,8 @@ client.on('interactionCreate', async interaction => {
         const tdee = Math.round(mb * facteurs[activite].facteur);
 
         const conseil =
-            facteurs[activite].facteur < 1.4 ? "💡 Augmente doucement ton activité quotidienne pour améliorer ton métabolisme." :
-            facteurs[activite].facteur < 1.6 ? "✅ Ton niveau d'activité est bon, continue comme ça 💪." :
+            facteurs[activite].facteur < 1.4 ? "💡 Augmente doucement ton activité pour améliorer ton métabolisme." :
+            facteurs[activite].facteur < 1.6 ? "✅ Ton niveau d'activité est bon, continue ainsi 💪." :
             "🔥 Excellent niveau d'activité, veille à un bon équilibre nutritionnel pour soutenir ton énergie.";
 
         const embed = new EmbedBuilder()
@@ -82,7 +101,7 @@ client.on('interactionCreate', async interaction => {
                 { name: '💡 Conseil', value: conseil, inline: false },
                 { name: '📌 Formule', value: 'MB x Facteur Activité', inline: false }
             )
-            .setThumbnail('https://cdn.discordapp.com/attachments/1388604881262350507/1392853458960388176/ChatGPT_Image_29_mai_2025_20_35_30.png')
+            .setThumbnail('https://cdn.discordapp.com/attachments/1388604881262350507/1392850813239562300/ChatGPT_Image_6_juil._2025_07_29_39.png')
             .setImage('https://cdn.discordapp.com/attachments/1388604881262350507/1392853458960388176/ChatGPT_Image_29_mai_2025_20_35_30.png')
             .setFooter({ text: 'HealthyBot • Calcul TDEE' })
             .setTimestamp();
@@ -91,7 +110,7 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
-// ===================== 🚀 Enregistrement des commandes =====================
+// ===================== 🚀 Déploiement des commandes =====================
 const commands = [
     new SlashCommandBuilder()
         .setName('imc')
@@ -100,7 +119,7 @@ const commands = [
         .addNumberOption(option => option.setName('taille').setDescription('Taille en cm').setRequired(true)),
     new SlashCommandBuilder()
         .setName('metabase')
-        .setDescription('Calcule ton Métabolisme de Base et ton TDEE.')
+        .setDescription('Calcule ton MB et ton TDEE.')
         .addNumberOption(option => option.setName('poids').setDescription('Poids en kg').setRequired(true))
         .addNumberOption(option => option.setName('taille').setDescription('Taille en cm').setRequired(true))
         .addIntegerOption(option => option.setName('age').setDescription('Âge').setRequired(true))
