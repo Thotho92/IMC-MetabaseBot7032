@@ -1,20 +1,17 @@
 {
-  "name": "imc-metabase-bot",
+  "name": "imc-metabasebot7032",
   "version": "1.0.0",
-  "description": "Bot Discord calcul IMC et MB pour Healthy&Co",
+  "description": "Bot Discord Healthy&Co - IMC, TDEE, Objectifs, Quiz",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "deploy": "node deploy_commands.js"
-  },
-  "dependencies": {
-    "discord.js": "^14.21.0",
-    "dotenv": "^17.0.1",
-    "express": "^5.1.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+    "deploy": "node script/deploy_commands.js"
   },
   "author": "Thotho",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5",
+    "node-fetch": "^3.3.2"
+  }
 }

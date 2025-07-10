@@ -1,28 +1,34 @@
+// 📂 commands/objectif.js
+
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('objectif')
-        .setDescription('Définis ton objectif (perte de poids, prise de masse, maintien).')
+        .setDescription('Définis ton objectif : perte de poids, prise de masse, maintien.')
         .addStringOption(option =>
             option.setName('objectif')
                 .setDescription('Ton objectif actuel.')
                 .setRequired(true)
-        ),
-
+                .addChoices(
+                    { name: 'Perte de poids', value: 'perte de poids' },
+                    { name: 'Prise de masse', value: 'prise de masse' },
+                    { name: 'Maintien', value: 'maintien' }
+                )),
     async execute(interaction) {
         try {
-            console.log('✅ Commande /objectif reçue');
+            console.log('✅ Commande /objectif reçue.');
 
-            await interaction.deferReply({ ephemeral: false });
+            await interaction.deferReply();
 
             const obj = interaction.options.getString('objectif');
 
             const objectifEmbed = new EmbedBuilder()
-                .setColor('#00FF99')
+                .setColor('#36D6B5')
                 .setTitle('🎯 Objectif enregistré')
                 .setDescription(`Ton objectif **${obj}** a été enregistré avec succès.`)
-                .setFooter({ text: 'Healthy&Co - Suivi personnalisé' });
+                .setFooter({ text: 'Healthy&Co • Suivi personnalisé' })
+                .setTimestamp();
 
             await interaction.editReply({ embeds: [objectifEmbed] });
 

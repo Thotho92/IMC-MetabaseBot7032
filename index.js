@@ -1,22 +1,21 @@
-// =============================================
-// index.js CLEAN & STABLE - IMC-MetaBot7032
-// =============================================
-require('dotenv').config();
-const fs = require('node:fs');
-const path = require('node:path');
-const { Client, Collection, GatewayIntentBits, Events } = require('discord.js');
+// 📂 index.js
 
-// =============================================
-// Initialisation du client avec intents minimalistes
-// =============================================
+const fs = require('fs');
+const path = require('path');
+const { Client, Collection, GatewayIntentBits, Partials } = require('discord.js');
+require('dotenv').config();
+
 const client = new Client({
-    intents: [GatewayIntentBits.Guilds]
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent
+    ],
+    partials: [Partials.Message, Partials.Channel]
 });
 
-// =============================================
-// Chargement dynamique des commandes
-// =============================================
 client.commands = new Collection();
+
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
@@ -25,54 +24,32 @@ for (const file of commandFiles) {
     const command = require(filePath);
     if ('data' in command && 'execute' in command) {
         client.commands.set(command.data.name, command);
-        console.log(`✅ Commande chargée : ${command.data.name}`);
     } else {
-        console.log(`❌ La commande ${file} est invalide (manque 'data' ou 'execute').`);
+        console.log(`[WARNING] The command at ${filePath} is missing required "data" or "execute" properties.`);
     }
 }
 
-// =============================================
-// Event prêt
-// =============================================
-client.once(Events.ClientReady, c => {
-    console.log(`✅ Connecté en tant que ${c.user.tag}`);
+client.once('ready', () => {
+    console.log(`✅ ${client.user.tag} is online and ready.`);
 });
 
-// =============================================
-// Gestion des interactions avec protection complète
-// =============================================
-client.on(Events.InteractionCreate, async interaction => {
+client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
     const command = client.commands.get(interaction.commandName);
 
-    if (!command) {
-        console.error(`❌ Commande ${interaction.commandName} introuvable.`);
-        return;
-    }
+    if (!command) return;
 
     try {
         await command.execute(interaction);
     } catch (error) {
-        console.error(`❌ Erreur lors de l'exécution de la commande ${interaction.commandName} :`, error);
-
-        try {
-            if (interaction.deferred) {
-                await interaction.editReply({ content: '❌ Une erreur est survenue lors de l\'exécution de la commande.' });
-            } else if (!interaction.replied) {
-                await interaction.reply({ content: '❌ Une erreur est survenue lors de l\'exécution de la commande.', ephemeral: true });
-            } else {
-                console.error('❌ Impossible de répondre : interaction déjà terminée.');
-            }
-        } catch (followUpError) {
-            console.error('❌ Erreur lors de la tentative de réponse après échec :', followUpError);
+        console.error(error);
+        if (interaction.deferred || interaction.replied) {
+            await interaction.followUp({ content: '❌ Une erreur est survenue lors de l\'exécution de la commande.', ephemeral: true });
+        } else {
+            await interaction.reply({ content: '❌ Une erreur est survenue lors de l\'exécution de la commande.', ephemeral: true });
         }
     }
 });
 
-// =============================================
-// Connexion du bot
-// =============================================
-client.login(process.env.TOKEN).catch(err => {
-    console.error('❌ Erreur lors de la connexion du bot :', err);
-});
+client.login(process.env.TOKEN);
