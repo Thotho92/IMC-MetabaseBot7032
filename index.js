@@ -1,4 +1,4 @@
-// 📂 index.js
+// index.js
 
 const fs = require('fs');
 const path = require('path');
@@ -25,19 +25,18 @@ for (const file of commandFiles) {
     if ('data' in command && 'execute' in command) {
         client.commands.set(command.data.name, command);
     } else {
-        console.log(`[WARNING] The command at ${filePath} is missing required "data" or "execute" properties.`);
+        console.log(`[WARNING] Le fichier ${filePath} n'a pas de propriété "data" ou "execute".`);
     }
 }
 
 client.once('ready', () => {
-    console.log(`✅ ${client.user.tag} is online and ready.`);
+    console.log(`✅ ${client.user.tag} est en ligne et prêt.`);
 });
 
 client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
     const command = client.commands.get(interaction.commandName);
-
     if (!command) return;
 
     try {
