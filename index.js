@@ -1,7 +1,8 @@
 const { Client, GatewayIntentBits, SlashCommandBuilder, REST, Routes, EmbedBuilder } = require('discord.js');
+const fs = require('fs');
 require('dotenv').config();
 
-// ===================== 🤖 LANCEMENT BOT =====================
+// ===================== ⚙️ INITIALISATION =====================
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -14,11 +15,107 @@ client.once('ready', () => {
   console.log(`✅ ${client.user.tag} est en ligne et prêt.`);
 });
 
-// ===================== 📊 INTERACTIONS SLASH =====================
+// ===================== 🔢 CONFIG COMPTEUR =====================
+const COMPTEUR_CHANNEL_ID = '1393546143127961610';
+const COSMIC_ROLE_ID = '1393547025072783522';
+const compteurPath = './compteur.json';
+
+let currentNumber = 1;
+let lastAuthorId = null;
+let lastMilestone = 0;
+let userScores = {};
+
+function chargerCompteur() {
+  if (fs.existsSync(compteurPath)) {
+    const data = JSON.parse(fs.readFileSync(compteurPath, 'utf-8'));
+    currentNumber = data.currentNumber || 1;
+    lastAuthorId = data.lastAuthorId || null;
+    lastMilestone = data.lastMilestone || 0;
+    userScores = data.userScores || {};
+    console.log(`🔁 Compteur rechargé : ${currentNumber}`);
+  } else {
+    sauvegarderCompteur();
+  }
+}
+
+function sauvegarderCompteur() {
+  const data = {
+    currentNumber,
+    lastAuthorId,
+    lastMilestone,
+    userScores
+  };
+  fs.writeFileSync(compteurPath, JSON.stringify(data, null, 2));
+}
+
+const failMessages = [
+  "❌ Oups, pas le bon chiffre chef.",
+  "🧠 On t’a vu... mais t’es pas synchro.",
+  "🔁 Essaie encore, ce n’est pas ça.",
+  "🤖 Mauvais numéro détecté. On reboot ?",
+  "📛 Nope. Le bon chiffre, c’est pas celui-là.",
+];
+
+// ===================== 📥 MESSAGES COMPTEUR =====================
+client.on('messageCreate', async message => {
+  if (message.channel.id !== COMPTEUR_CHANNEL_ID) return;
+  if (message.author.bot) return;
+
+  chargerCompteur();
+
+  const content = message.content.trim();
+  const parsedNumber = parseInt(content);
+  if (isNaN(parsedNumber)) return;
+
+  if (message.author.id === lastAuthorId) {
+    await message.reply("🚫 Tu ne peux pas compter deux fois de suite !");
+    return;
+  }
+
+  if (parsedNumber !== currentNumber) {
+    const fail = failMessages[Math.floor(Math.random() * failMessages.length)];
+    await message.reply(`${fail} Le bon chiffre était **${currentNumber}**.`);
+    return;
+  }
+
+  const emojis = ["🚀", "🌟", "💫", "🧭"];
+  const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+  await message.react(emoji);
+  lastAuthorId = message.author.id;
+  currentNumber++;
+  userScores[message.author.id] = (userScores[message.author.id] || 0) + 1;
+
+  sauvegarderCompteur();
+
+  if (currentNumber % 100 === 0 && currentNumber !== lastMilestone) {
+    lastMilestone = currentNumber;
+    const topUserId = Object.keys(userScores).reduce((a, b) => userScores[a] > userScores[b] ? a : b);
+    const topMember = await message.guild.members.fetch(topUserId);
+
+    const embed = new EmbedBuilder()
+      .setTitle(`🚀 Cap ${currentNumber} atteint !`)
+      .setDescription(`Félicitations à <@${topUserId}> pour sa contribution cosmique ✨\nTu gagnes le rôle **@cosmic-traveler** !`)
+      .setColor('#00b0f4');
+
+    await message.channel.send({ embeds: [embed] });
+
+    const role = message.guild.roles.cache.get(COSMIC_ROLE_ID);
+    if (role) {
+      const allWithRole = message.guild.members.cache.filter(m => m.roles.cache.has(COSMIC_ROLE_ID));
+      for (const member of allWithRole.values()) {
+        await member.roles.remove(role).catch(() => {});
+      }
+      await topMember.roles.add(role).catch(() => {});
+    }
+
+    sauvegarderCompteur();
+  }
+});
+
+// ===================== 📊 SLASH COMMANDS =====================
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
-  // ---------- 📏 /imc ----------
   if (interaction.commandName === 'imc') {
     const poids = interaction.options.getNumber('poids');
     const taille = interaction.options.getNumber('taille');
@@ -55,15 +152,12 @@ client.on('interactionCreate', async interaction => {
         { name: '💡 Conseil', value: conseil, inline: false },
         { name: '📌 Formule', value: 'Poids (kg) ÷ Taille² (m²)', inline: false }
       )
-      .setThumbnail('https://cdn.discordapp.com/attachments/1388604881262350507/1392850813239562300/ChatGPT_Image_6_juil._2025_07_29_39.png')
-      .setImage('https://cdn.discordapp.com/attachments/1388604881262350507/1392853458960388176/ChatGPT_Image_29_mai_2025_20_35_30.png')
       .setFooter({ text: 'HealthyBot • Calcul IMC' })
       .setTimestamp();
 
     await interaction.editReply({ embeds: [embed] });
   }
 
-  // ---------- 🔥 /metabase ----------
   if (interaction.commandName === 'metabase') {
     const poids = interaction.options.getNumber('poids');
     const taille = interaction.options.getNumber('taille');
@@ -109,8 +203,6 @@ client.on('interactionCreate', async interaction => {
         { name: '💡 Conseil', value: conseil, inline: false },
         { name: '📌 Formule', value: 'MB x Facteur Activité', inline: false }
       )
-      .setThumbnail('https://cdn.discordapp.com/attachments/1388604881262350507/1392850813239562300/ChatGPT_Image_6_juil._2025_07_29_39.png')
-      .setImage('https://cdn.discordapp.com/attachments/1388604881262350507/1392853458960388176/ChatGPT_Image_29_mai_2025_20_35_30.png')
       .setFooter({ text: 'HealthyBot • Calcul TDEE' })
       .setTimestamp();
 
@@ -118,76 +210,7 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
-// ===================== 🧠 COMPTEUR COSMIQUE =====================
-const COMPTEUR_CHANNEL_ID = '1393546143127961610';
-const COSMIC_ROLE_ID = '1393547025072783522';
-
-let currentNumber = 1;
-let lastAuthorId = null;
-let lastMilestone = 0;
-let userScores = {};
-
-const failMessages = [
-  "❌ Oups, pas le bon chiffre chef.",
-  "🧠 On t’a vu... mais t’es pas synchro.",
-  "🔁 Essaie encore, ce n’est pas ça.",
-  "🤖 Mauvais numéro détecté. On reboot ?",
-  "📛 Nope. Le bon chiffre, c’est pas celui-là.",
-];
-
-client.on('messageCreate', async message => {
-  if (message.channel.id !== COMPTEUR_CHANNEL_ID) return;
-  if (message.author.bot) return;
-
-  const content = message.content.trim();
-  const parsedNumber = parseInt(content);
-  if (isNaN(parsedNumber)) return;
-
-  if (message.author.id === lastAuthorId) {
-    await message.reply("🚫 Tu ne peux pas compter deux fois de suite !");
-    return;
-  }
-
-  if (parsedNumber !== currentNumber) {
-    const fail = failMessages[Math.floor(Math.random() * failMessages.length)];
-    await message.reply(`${fail} Le bon chiffre était **${currentNumber}**.`);
-    return;
-  }
-
-  // ✅ Bonne réponse
-  const emojis = ["🚀", "🌟", "💫", "🧭"];
-  const emoji = emojis[Math.floor(Math.random() * emojis.length)];
-  await message.react(emoji);
-  lastAuthorId = message.author.id;
-  currentNumber++;
-
-  userScores[message.author.id] = (userScores[message.author.id] || 0) + 1;
-
-  if (currentNumber % 100 === 0 && currentNumber !== lastMilestone) {
-    lastMilestone = currentNumber;
-
-    const topUserId = Object.keys(userScores).reduce((a, b) => userScores[a] > userScores[b] ? a : b);
-    const topMember = await message.guild.members.fetch(topUserId);
-
-    const embed = new EmbedBuilder()
-      .setTitle(`🚀 Cap ${currentNumber} atteint !`)
-      .setDescription(`Félicitations à <@${topUserId}> pour sa contribution cosmique ✨\nTu gagnes le rôle **@cosmic-traveler** !`)
-      .setColor('#00b0f4');
-
-    await message.channel.send({ embeds: [embed] });
-
-    const role = message.guild.roles.cache.get(COSMIC_ROLE_ID);
-    if (role) {
-      const allWithRole = message.guild.members.cache.filter(m => m.roles.cache.has(COSMIC_ROLE_ID));
-      for (const member of allWithRole.values()) {
-        await member.roles.remove(role).catch(() => {});
-      }
-      await topMember.roles.add(role).catch(() => {});
-    }
-  }
-});
-
-// ===================== 🧱 ENREGISTREMENT DES COMMANDES =====================
+// ===================== 🔁 ENREGISTREMENT DES COMMANDES =====================
 const commands = [
   new SlashCommandBuilder()
     .setName('imc')
@@ -217,7 +240,10 @@ const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 (async () => {
   try {
     console.log('🛠️ Déploiement des commandes...');
-    await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), { body: commands });
+    await rest.put(
+      Routes.applicationCommands(process.env.CLIENT_ID),
+      { body: commands }
+    );
     console.log('✅ Commandes enregistrées avec succès.');
   } catch (error) {
     console.error(error);
