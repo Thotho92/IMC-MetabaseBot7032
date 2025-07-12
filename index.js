@@ -148,6 +148,82 @@ const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
     } catch (error) {
         console.error(error);
     }
+    const { EmbedBuilder } = require('discord.js');
+
+// === CONFIGURATION ===
+const COMPTEUR_CHANNEL_ID = '1393546143127961610';
+const COSMIC_ROLE_ID = '1393547025072783522';
+
+let currentNumber = 1;
+let lastAuthorId = null;
+let lastMilestone = 0;
+let userScores = {}; // { userId: score }
+
+const failMessages = [
+  "❌ Oups, pas le bon chiffre chef.",
+  "🧠 On t’a vu... mais t’es pas synchro.",
+  "🔁 Essaie encore, ce n’est pas ça.",
+  "🤖 Mauvais numéro détecté. On reboot ?",
+  "📛 Nope. Le bon chiffre, c’est pas celui-là.",
+];
+
+client.on('messageCreate', async message => {
+  if (message.channel.id !== COMPTEUR_CHANNEL_ID) return;
+  if (message.author.bot) return;
+
+  const content = message.content.trim();
+  const parsedNumber = parseInt(content);
+  if (isNaN(parsedNumber)) return;
+
+  if (message.author.id === lastAuthorId) {
+    await message.reply("🚫 Tu ne peux pas compter deux fois de suite !");
+    return;
+  }
+
+  if (parsedNumber !== currentNumber) {
+    const fail = failMessages[Math.floor(Math.random() * failMessages.length)];
+    await message.reply(`${fail} Le bon chiffre était **${currentNumber}**.`);
+    return;
+  }
+
+  // ✅ Bonne réponse
+  await message.react("✅");
+  lastAuthorId = message.author.id;
+  currentNumber++;
+
+  // ➕ Update score
+  userScores[message.author.id] = (userScores[message.author.id] || 0) + 1;
+
+  // 🎯 Palier atteint (100, 200, etc.)
+  if (currentNumber % 100 === 0 && currentNumber !== lastMilestone) {
+    lastMilestone = currentNumber;
+
+    // Trouver le membre top contributeur
+    const topUserId = Object.keys(userScores).reduce((a, b) => userScores[a] > userScores[b] ? a : b);
+    const topMember = await message.guild.members.fetch(topUserId);
+
+    // 🎉 Embed de félicitations
+    const embed = new EmbedBuilder()
+      .setTitle(`🚀 Cap ${currentNumber} atteint !`)
+      .setDescription(`Félicitations à <@${topUserId}> pour sa contribution cosmique ✨\nTu gagnes le rôle **@cosmic-traveler** !`)
+      .setColor('#00b0f4');
+
+    await message.channel.send({ embeds: [embed] });
+
+    // 🎖 Attribution du rôle
+    const role = message.guild.roles.cache.get(COSMIC_ROLE_ID);
+    if (role) {
+      // Retirer aux autres membres
+      const allWithRole = message.guild.members.cache.filter(m => m.roles.cache.has(COSMIC_ROLE_ID));
+      for (const member of allWithRole.values()) {
+        await member.roles.remove(role).catch(() => {});
+      }
+      // Ajouter au top
+      await topMember.roles.add(role).catch(() => {});
+    }
+  }
+});
+
 })();
 
 client.login(process.env.TOKEN);
